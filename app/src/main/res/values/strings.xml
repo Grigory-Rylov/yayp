@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">yayp</string>
+    <string name="isPlaying">playing or not</string>
+    <string name="stop">stop</string>
+</resources>
