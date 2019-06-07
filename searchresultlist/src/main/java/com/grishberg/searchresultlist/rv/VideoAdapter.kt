@@ -6,65 +6,55 @@ import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import com.google.api.services.youtube.model.Video
 import com.grishberg.searchresultlist.R
+import com.grishberg.videolistcore.CardClickedAction
+import com.grishberg.youtuberepositorycore.VideoContainer
 import com.squareup.picasso.Picasso
 import java.text.DecimalFormat
 
 internal class VideoAdapter(
-    private val context: Context
+    private val context: Context,
+    private val clickedAction: CardClickedAction
 ) : RecyclerView.Adapter<VideoItemHolder>() {
     private val sFormatter = DecimalFormat("#,###,###")
-    var onScrollToEndAction: OnScrolledToEndAction = OnScrolledToEndAction.STUB
-    private val mPlaylistVideos = ArrayList<Video>()
+    private val videos = ArrayList<VideoContainer>()
 
     // Create new views (invoked by the layout manager)
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VideoItemHolder {
         // inflate a card layout
         val v = LayoutInflater.from(parent.context).inflate(R.layout.item_layout, parent, false)
         // populate the viewholder
-        return VideoItemHolder(v)
+
+        val vh = VideoItemHolder(v)
+
+        v.setOnClickListener {
+            val pos = vh.adapterPosition
+            clickedAction.onCardClicked(videos[pos].id, videos[pos].title, videos[pos].description)
+        }
+        return vh
     }
 
     // Replace the contents of a view (invoked by the layout manager)
     override fun onBindViewHolder(holder: VideoItemHolder, position: Int) {
-        if (mPlaylistVideos.size === 0) {
+        if (videos.size === 0) {
             return
         }
 
-        val video = mPlaylistVideos.get(position)
-        val videoSnippet = video.getSnippet()
-        val videoContentDetails = video.getContentDetails()
-        val videoStatistics = video.getStatistics()
-
-        holder.mTitleText.setText(videoSnippet.getTitle())
-        holder.mDescriptionText.setText(videoSnippet.getDescription())
-
+        val video = videos[position]
+        holder.mTitleText.text = video.title
+        holder.mDescriptionText.text = video.description
         // load the video thumbnail image
         Picasso.with(context)
-            .load(videoSnippet.getThumbnails().getHigh().getUrl())
+            .load(video.thumbnailUrl)
             .placeholder(R.drawable.video_placeholder)
             .into(holder.mThumbnailImage)
-
-        // set the click listener to play the video
-        holder.mThumbnailImage.setOnClickListener(View.OnClickListener {
-            /*
-            TODO: callba
-            context.startActivity(
-                Intent(
-                    Intent.ACTION_VIEW,
-                    Uri.parse("https://www.youtube.com/watch?v=" + video.getId())
-                )
-            )
-            */
-        })
 
         // create and set the click listener for both the share icon and share text
         val shareClickListener = View.OnClickListener {
             val sendIntent = Intent()
             sendIntent.action = Intent.ACTION_SEND
-            sendIntent.putExtra(Intent.EXTRA_SUBJECT, "Watch \"" + videoSnippet.getTitle() + "\" on YouTube")
-            sendIntent.putExtra(Intent.EXTRA_TEXT, "https://www.youtube.com/watch?v=" + video.getId())
+            sendIntent.putExtra(Intent.EXTRA_SUBJECT, "Watch \"" + video.title + "\" on YouTube")
+            sendIntent.putExtra(Intent.EXTRA_TEXT, "https://www.youtube.com/watch?v=" + video.id)
             sendIntent.type = "text/plain"
             context.startActivity(sendIntent)
         }
@@ -72,32 +62,16 @@ internal class VideoAdapter(
         holder.mShareText.setOnClickListener(shareClickListener)
 
         // set the video duration text
-        holder.mDurationText.setText(parseDuration(videoContentDetails.getDuration()))
+        holder.mDurationText.text = parseDuration(video.duration)
         // set the video statistics
-        holder.mViewCountText.setText(sFormatter.format(videoStatistics.getViewCount()))
-        holder.mLikeCountText.setText(sFormatter.format(videoStatistics.getLikeCount()))
-        holder.mDislikeCountText.setText(sFormatter.format(videoStatistics.getDislikeCount()))
-
-        /*
-        // get the next playlist page if we're at the end of the current page and we have another page to get
-        val nextPageToken = mPlaylistVideos.getNextPageToken()
-        if (!isEmpty(nextPageToken) && position == mPlaylistVideos.size() - 1) {
-            holder.itemView.post(Runnable {
-                onScrollToEndAction.onScrolledToEnd(nextPageToken)
-            })
-        }
-        */
+        holder.mViewCountText.text = sFormatter.format(video.viewCount)
+        holder.mLikeCountText.text = sFormatter.format(video.likeCount)
+        holder.mDislikeCountText.text = sFormatter.format(video.dislikeCount)
 
     }
 
     override fun getItemCount(): Int {
-        return mPlaylistVideos.size
-    }
-
-    private fun isEmpty(s: String?): Boolean {
-        return if (s == null || s.length == 0) {
-            true
-        } else false
+        return videos.size
     }
 
     private fun parseDuration(`in`: String): String {
@@ -130,5 +104,10 @@ internal class VideoAdapter(
         }
 
         return "$minutes:$seconds"
+    }
+
+    fun addVideo(videos: List<VideoContainer>) {
+        this.videos.addAll(videos)
+        notifyDataSetChanged()
     }
 }

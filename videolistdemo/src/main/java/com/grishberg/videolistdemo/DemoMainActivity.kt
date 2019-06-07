@@ -37,8 +37,8 @@ class DemoMainActivity : AppCompatActivity() {
     }
 
     private inner class VideoClickedListener : CardClickedAction {
-        override fun onCardClicked(cardId: String, title: String) {
-            Toast.makeText(this@DemoMainActivity, cardId, Toast.LENGTH_SHORT).show()
+        override fun onCardClicked(cardId: String, title: String, desc: String) {
+            Toast.makeText(this@DemoMainActivity, "clicked on id=${cardId}", Toast.LENGTH_SHORT).show()
         }
     }
 }
