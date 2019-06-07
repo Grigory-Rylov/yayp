@@ -12,7 +12,6 @@ import android.support.v7.app.AppCompatActivity
 import android.view.MotionEvent
 import android.view.SurfaceView
 import android.view.ViewGroup
-import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.MediaController
 import com.grishberg.searchresultlist.VideoListFacadeImpl
@@ -47,8 +46,6 @@ class MainActivity : AppCompatActivity() {
         mediaController = MediaController(this)
         mediaController.setAnchorView(surfaceView)
 
-        val data = intent.data
-
         val startServiceIntent = Intent(this@MainActivity, PlayerService::class.java)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             startForegroundService(startServiceIntent)
@@ -67,10 +64,6 @@ class MainActivity : AppCompatActivity() {
             FrameLayout.LayoutParams.MATCH_PARENT
         )
         container.addView(viewList)
-    }
-
-    override fun onNewIntent(intent: Intent?) {
-        super.onNewIntent(intent)
     }
 
     private fun stopPlaying() {
@@ -115,9 +108,9 @@ class MainActivity : AppCompatActivity() {
     private inner class Connected : State {
         override fun onConnected(service: Player) {
             player = service
-            //service.attachView(surfaceView.holder)
-            //mediaController.setMediaPlayer(service.mediaController)
-            //showMediaController()
+            service.attachView(surfaceView.holder)
+            mediaController.setMediaPlayer(service.mediaController)
+            showMediaController()
         }
 
         override fun onDisconnected() {
