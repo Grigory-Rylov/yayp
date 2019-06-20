@@ -6,7 +6,6 @@ import android.content.Intent
 import android.content.ServiceConnection
 import android.os.Build
 import android.os.Bundle
-import android.os.Handler
 import android.os.IBinder
 import android.support.v7.app.AppCompatActivity
 import android.view.MotionEvent
@@ -14,37 +13,55 @@ import android.view.SurfaceView
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.MediaController
+import com.example.backgroundplayer.PlayerFacade
+import com.grishberg.backgroundyoutubeplayer.MediaControllerFacadeImpl
+import com.grishberg.backgroundyoutubeplayer.PlayerFacadeImpl
+import com.grishberg.backgroundyoutubeplayer.PlayerService
+import com.grishberg.backgroundyoutubeplayer.ServiceProvider
+import com.grishberg.backgroundyoutubeplayer.lifecycle.ActivityLifecycleAction
+import com.grishberg.backgroundyoutubeplayer.lifecycle.ActivityLifecycleDelegate
 import com.grishberg.searchresultlist.VideoListFacadeImpl
 import com.grishberg.videolistcore.VideoListFacade
+import com.grishberg.yayp.BuildConfig
 import com.grishberg.yayp.R
-import com.grishberg.yayp.player.Player
-import com.grishberg.yayp.player.PlayerService
-import com.grishberg.yayp.player.PlayerStub
+import com.grishberg.yayp.common.LogcatLogger
 import com.grishberg.youtuberepository.YouTubeRepositoryImpl
 
 
-class MainActivity : AppCompatActivity() {
-    private val STUB: Player = PlayerStub()
-    private val disconnected = Disconnected()
-    private val connected = Connected()
-    private var state: State = disconnected
+class MainActivity : AppCompatActivity(), ActivityLifecycleDelegate {
+    private val logger = LogcatLogger()
     private val connection = ServiceConnectionImpl()
-    private var player = STUB
-    private val hander = Handler()
     private lateinit var surfaceView: SurfaceView
     private lateinit var mediaController: MediaController
     private lateinit var videoListFacade: VideoListFacade
+    private val lifecycleActions: ArrayList<ActivityLifecycleAction> = ArrayList()
+    private lateinit var playerFacade: PlayerFacade
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         if (savedInstanceState == null) {
-            createView()
+            //createView()
         }
 
-        surfaceView = findViewById(R.id.surfaceView)
+        surfaceView = SurfaceView(this)
         mediaController = MediaController(this)
+
+        playerFacade = PlayerFacadeImpl(
+            this,
+            MediaControllerFacadeImpl(mediaController),
+            surfaceView,
+            logger
+        )
         mediaController.setAnchorView(surfaceView)
+        playerFacade.playStream("DqHa4WUJatc")
+
+        val container = findViewById<ViewGroup>(R.id.container)
+        surfaceView.layoutParams = FrameLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        )
+        container.addView(surfaceView)
 
         val startServiceIntent = Intent(this@MainActivity, PlayerService::class.java)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -56,7 +73,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun createView() {
         val container: ViewGroup = findViewById(R.id.container)
-        val youTubeRepository = YouTubeRepositoryImpl()
+        val youTubeRepository = YouTubeRepositoryImpl(BuildConfig.API_KEY)
         videoListFacade = VideoListFacadeImpl(this, youTubeRepository)
         val viewList = videoListFacade.createVideoListView()
         viewList.layoutParams = FrameLayout.LayoutParams(
@@ -66,29 +83,48 @@ class MainActivity : AppCompatActivity() {
         container.addView(viewList)
     }
 
-    private fun stopPlaying() {
-        state.stopPlaying()
+    override fun registerActivityLifeCycleAction(action: ActivityLifecycleAction) {
+        lifecycleActions.add(action)
+    }
+
+    override fun unregisterActivityLifeCycleAction(action: ActivityLifecycleAction) {
+        lifecycleActions.remove(action)
+    }
+
+    override fun unbindService() {
+        unbindService(connection)
+    }
+
+    override fun bindService() {
+        val intent = Intent(this@MainActivity, PlayerService::class.java)
+        bindService(intent, connection, Context.BIND_AUTO_CREATE)
     }
 
     override fun onStart() {
         super.onStart()
-        state.onStart()
+        notifyOnStart()
+    }
+
+    private fun notifyOnStart() {
+        for (i in 0 until lifecycleActions.size) {
+            lifecycleActions[i].onStarted()
+        }
     }
 
     override fun onStop() {
         super.onStop()
-        state.onStop()
+        notifyOnStop()
+    }
+
+    private fun notifyOnStop() {
+        for (i in 0 until lifecycleActions.size) {
+            lifecycleActions[i].onStop()
+        }
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
         mediaController.show()
         return false
-    }
-
-    private fun showMediaController() {
-        hander.post {
-            mediaController.show()
-        }
     }
 
     /** Defines callbacks for service binding, passed to bindService()  */
@@ -97,54 +133,16 @@ class MainActivity : AppCompatActivity() {
             className: ComponentName,
             binder: IBinder
         ) {
-            state.onConnected((binder as PlayerService.LocalBinder).getService())
+            for (i in 0 until lifecycleActions.size) {
+                lifecycleActions[i].onServiceConnected(binder as ServiceProvider)
+            }
         }
 
-        override fun onServiceDisconnected(arg0: ComponentName) {
-            state.onDisconnected()
-        }
-    }
-
-    private inner class Connected : State {
-        override fun onConnected(service: Player) {
-            player = service
-            service.attachView(surfaceView.holder)
-            mediaController.setMediaPlayer(service.mediaController)
-            showMediaController()
-        }
-
-        override fun onDisconnected() {
-            state = disconnected
-        }
-
-        override fun stopPlaying() {
-            player.stop()
-        }
-
-        override fun onStop() {
-            player = STUB
-            unbindService(connection)
-            onDisconnected()
+        override fun onServiceDisconnected(componentName: ComponentName) {
+            for (i in 0 until lifecycleActions.size) {
+                lifecycleActions[i].onServiceDisconnected()
+            }
         }
     }
 
-    private inner class Disconnected : State {
-        override fun onConnected(service: Player) {
-            state = connected
-            state.onConnected(service)
-        }
-
-        override fun onStart() {
-            val intent = Intent(this@MainActivity, PlayerService::class.java)
-            bindService(intent, connection, Context.BIND_AUTO_CREATE)
-        }
-    }
-
-    private interface State {
-        fun onConnected(service: Player) = Unit
-        fun onDisconnected() = Unit
-        fun onStop() = Unit
-        fun onStart() = Unit
-        fun stopPlaying() = Unit
-    }
 }
