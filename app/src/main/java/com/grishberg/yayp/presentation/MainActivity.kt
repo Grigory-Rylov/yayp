@@ -12,7 +12,6 @@ import android.view.MotionEvent
 import android.view.SurfaceView
 import android.view.ViewGroup
 import android.widget.FrameLayout
-import android.widget.MediaController
 import com.example.backgroundplayer.PlayerFacade
 import com.grishberg.backgroundyoutubeplayer.MediaControllerFacadeImpl
 import com.grishberg.backgroundyoutubeplayer.PlayerFacadeImpl
@@ -32,7 +31,6 @@ class MainActivity : AppCompatActivity(), ActivityLifecycleDelegate {
     private val logger = LogcatLogger()
     private val connection = ServiceConnectionImpl()
     private lateinit var surfaceView: SurfaceView
-    private lateinit var mediaController: MediaController
     private lateinit var videoListFacade: VideoListFacade
     private val lifecycleActions: ArrayList<ActivityLifecycleAction> = ArrayList()
     private lateinit var playerFacade: PlayerFacade
@@ -45,15 +43,13 @@ class MainActivity : AppCompatActivity(), ActivityLifecycleDelegate {
         }
 
         surfaceView = SurfaceView(this)
-        mediaController = MediaController(this)
 
         playerFacade = PlayerFacadeImpl(
             this,
-            MediaControllerFacadeImpl(mediaController),
+            this,
             surfaceView,
             logger
         )
-        mediaController.setAnchorView(surfaceView)
         playerFacade.playStream("DqHa4WUJatc")
 
         val container = findViewById<ViewGroup>(R.id.container)
@@ -123,7 +119,7 @@ class MainActivity : AppCompatActivity(), ActivityLifecycleDelegate {
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
-        mediaController.show()
+        playerFacade.showControls()
         return false
     }
 

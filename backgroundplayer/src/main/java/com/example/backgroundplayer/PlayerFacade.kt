@@ -5,5 +5,7 @@ import android.view.View
 interface PlayerFacade {
     fun createView() : View
 
+    fun showControls()
+
     fun playStream(id: String)
 }

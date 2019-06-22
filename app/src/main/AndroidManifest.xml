@@ -19,79 +19,9 @@
 
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
-
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW">
-                </action>
-                <action android:name="android.media.action.MEDIA_PLAY_FROM_SEARCH">
-                </action>
-                <action android:name="android.nfc.action.NDEF_DISCOVERED">
-                </action>
-                <category android:name="android.intent.category.DEFAULT">
-                </category>
-                <category android:name="android.intent.category.BROWSABLE">
-                </category>
-                <data android:scheme="http">
-                </data>
-                <data android:scheme="https">
-                </data>
-                <data android:host="youtube.com">
-                </data>
-                <data android:host="www.youtube.com">
-                </data>
-                <data android:host="m.youtube.com">
-                </data>
-                <data android:host="youtu.be">
-                </data>
-                <data android:pathPattern=".*">
-                </data>
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW">
-                </action>
-                <action android:name="android.media.action.MEDIA_PLAY_FROM_SEARCH">
-                </action>
-                <action android:name="android.nfc.action.NDEF_DISCOVERED">
-                </action>
-                <category android:name="android.intent.category.DEFAULT">
-                </category>
-                <category android:name="android.intent.category.BROWSABLE">
-                </category>
-                <data android:scheme="vnd.youtube">
-                </data>
-                <data android:scheme="vnd.youtube.launch">
-                </data>
-            </intent-filter>
-
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-                <category android:name="android.intent.category.BROWSABLE"/>
-                <data android:scheme="http" android:host="www.youtube.com" android:pathPrefix="/watch"/>
-                <data android:scheme="https" android:host="www.youtube.com" android:pathPrefix="/watch"/>
-                <data android:scheme="http" android:host="youtube.com" android:pathPrefix="/watch"/>
-                <data android:scheme="https" android:host="youtube.com" android:pathPrefix="/watch"/>
-            </intent-filter>
-
-            <!-- separate intent-filter to avoid host/pathPrefix "bleeding" -->
-            <!-- https://stackoverflow.com/questions/31002909/android-deeplink-pathprefix-attribute-is-being-ignored -->
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-                <category android:name="android.intent.category.BROWSABLE"/>
-                <data android:scheme="http" android:host="youtu.be"/>
-                <data android:scheme="https" android:host="youtu.be"/>
-            </intent-filter>
-
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-                <category android:name="android.intent.category.BROWSABLE"/>
-                <data android:host="www.youtube.com" android:scheme="http"/>
-            </intent-filter>
         </activity>
 
-        <service android:name=".player.PlayerService"/>
+        <service android:name="com.grishberg.backgroundyoutubeplayer.PlayerService"/>
     </application>
 
 </manifest>

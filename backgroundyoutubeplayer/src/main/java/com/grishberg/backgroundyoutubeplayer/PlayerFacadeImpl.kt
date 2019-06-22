@@ -1,10 +1,13 @@
 package com.grishberg.backgroundyoutubeplayer
 
+import android.content.Context
 import android.view.SurfaceView
 import android.view.View
+import android.widget.MediaController
 import com.example.backgroundplayer.PlayerFacade
 import com.grishberg.backgroundyoutubeplayer.lifecycle.ActivityLifecycleAction
 import com.grishberg.backgroundyoutubeplayer.lifecycle.ActivityLifecycleDelegate
+import com.grishberg.backgroundyoutubeplayer.mediacontroller.MediaPlayerControllerStub
 import com.grishberg.common.Logger
 
 private const val TAG = "PlayerFacade"
@@ -13,19 +16,24 @@ private const val TAG = "PlayerFacade"
  * This class lives as long as activity lives.
  */
 class PlayerFacadeImpl(
+    private val context: Context,
     private val lifecycleDelegate: ActivityLifecycleDelegate,
-    private val mediaController: MediaControllerFacade,
     private val videoView: SurfaceView,
     private val logger: Logger
-) : PlayerFacade, ActivityLifecycleAction {
+) : PlayerFacade, ActivityLifecycleAction, PlayerScreen {
 
     private var playerService: Player = Player.STUB
+    private val mediaController: MediaController
+
     private val disconnected = Disconnected()
     private val connected = Connected()
     private var state: State = disconnected
 
     init {
         lifecycleDelegate.registerActivityLifeCycleAction(this)
+        mediaController = MediaController(context)
+        mediaController.setMediaPlayer(MediaPlayerControllerStub())
+        mediaController.setAnchorView(videoView)
     }
 
     override fun createView(): View {
@@ -50,6 +58,18 @@ class PlayerFacadeImpl(
 
     override fun onServiceDisconnected() {
         state.onDisconnected()
+    }
+
+    override fun showControls() {
+        mediaController.show()
+    }
+
+    override fun updateScreenSize(w: Int, h: Int) {
+        val ratio = w.toFloat() / h.toFloat()
+        val lp = videoView.layoutParams
+        val newHeight = videoView.width / ratio
+        lp.height = newHeight.toInt()
+        videoView.requestLayout()
     }
 
     private inner class Connected : State {
@@ -78,8 +98,8 @@ class PlayerFacadeImpl(
         override fun onConnected(service: Player) {
             logger.d(TAG, "onConnected")
             playerService = service
-            playerService.attachView(videoView.holder)
-            playerService.setMediaController(mediaController)
+            playerService.attachView(videoView.holder, this@PlayerFacadeImpl)
+            playerService.setMediaController(MediaControllerFacade(mediaController))
             state = connected
             if (videoId.isNotEmpty()) {
                 state.playVideo(videoId)
