@@ -99,7 +99,7 @@ class PlayerFacadeImpl(
             logger.d(TAG, "onConnected")
             playerService = service
             playerService.attachView(videoView.holder, this@PlayerFacadeImpl)
-            playerService.setMediaController(MediaControllerFacade(mediaController))
+            playerService.setMediaController(mediaController)
             state = connected
             if (videoId.isNotEmpty()) {
                 state.playVideo(videoId)

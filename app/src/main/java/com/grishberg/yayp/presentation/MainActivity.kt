@@ -13,7 +13,6 @@ import android.view.SurfaceView
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import com.example.backgroundplayer.PlayerFacade
-import com.grishberg.backgroundyoutubeplayer.MediaControllerFacadeImpl
 import com.grishberg.backgroundyoutubeplayer.PlayerFacadeImpl
 import com.grishberg.backgroundyoutubeplayer.PlayerService
 import com.grishberg.backgroundyoutubeplayer.ServiceProvider
