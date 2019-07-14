@@ -7,5 +7,7 @@ interface PlayerFacade {
 
     fun showControls()
 
-    fun playStream(id: String)
+    fun playVideoById(id: String)
+
+    fun stopPlaying()
 }

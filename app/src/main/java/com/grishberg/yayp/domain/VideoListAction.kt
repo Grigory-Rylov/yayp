@@ -1,8 +1,9 @@
 package com.grishberg.yayp.domain
 
 interface VideoListAction {
-    fun hideAnimated() = STUB
-    fun showAnimated() = STUB
+    fun hideAnimated() = Unit
+    fun showAnimated() = Unit
+    fun closeApp() = Unit
 
     object STUB : VideoListAction
 }

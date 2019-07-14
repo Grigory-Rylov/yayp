@@ -41,6 +41,8 @@ class PlayerService : Service(), Player, PlayPauseAction {
 
     override fun onCreate() {
         Log.d(TAG, "onCreated service")
+        val notification = notification.createNotification()
+        startForeground(NOTIFICATION_ID, notification)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {

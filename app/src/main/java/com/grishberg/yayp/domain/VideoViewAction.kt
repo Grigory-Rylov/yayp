@@ -1,11 +1,10 @@
 package com.grishberg.yayp.domain
 
-import android.net.Uri
-
 interface VideoViewAction {
     fun showAnimated() = Unit
     fun hideAnimated() = Unit
-    fun play(stream: Uri) = Unit
+    fun play(videoId: String) = Unit
+    fun stopPlay() = Unit
 
     object STUB : VideoViewAction
 }

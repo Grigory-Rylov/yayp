@@ -1,50 +1,69 @@
 package com.grishberg.yayp.domain
 
-class PlayerLogic {
+interface PlayerLogic {
+    fun onVideoClicked(id: String) = Unit
+    fun onBackPressed() = Unit
+    fun registerVideoViewAction(action: VideoViewAction) = Unit
+    fun unregisterVideoViewAction(action: VideoViewAction) = Unit
+    fun registerVideoListAction(action: VideoListAction) = Unit
+    fun unregisterVideoListAction(action: VideoListAction) = Unit
+}
+
+class PlayerLogicImpl : PlayerLogic {
     private var videoViewAction: VideoViewAction = VideoViewAction.STUB
     private var videoListAction: VideoListAction = VideoListAction.STUB
     private val videoList: State = VideoListState()
+    private val videoView: State = VideoViewState()
     private var state: State = videoList
 
-    fun onVideoClicked(id: String) {
-        videoListAction.hideAnimated()
-        videoViewAction.showAnimated()
+    override fun onVideoClicked(id: String) {
+        state.onVideoClicked(id)
     }
 
-    fun onBackPressed() {
+    override fun onBackPressed() {
         state.onBackPressed()
     }
 
-    fun registerVideoViewAction(action: VideoViewAction) {
+    override fun registerVideoViewAction(action: VideoViewAction) {
         videoViewAction = action
     }
 
-    fun unregisterVideoViewAction(action: VideoViewAction) {
+    override fun unregisterVideoViewAction(action: VideoViewAction) {
         videoViewAction = VideoViewAction.STUB
     }
 
-    fun registerVideoListAction(action: VideoListAction) {
+    override fun registerVideoListAction(action: VideoListAction) {
         videoListAction = action
     }
 
-    fun unregisterVideoListAction(action: VideoListAction) {
+    override fun unregisterVideoListAction(action: VideoListAction) {
         videoListAction = VideoListAction.STUB
     }
 
     private inner class VideoListState : State {
         override fun onBackPressed() {
-            //TODO: exit from app
+            videoListAction.closeApp()
+        }
+
+        override fun onVideoClicked(id: String) {
+            state = videoView
+            videoListAction.hideAnimated()
+            videoViewAction.showAnimated()
+            videoViewAction.play(id)
         }
     }
 
     private inner class VideoViewState : State {
         override fun onBackPressed() {
+            state = videoList
+            videoViewAction.stopPlay()
             videoViewAction.hideAnimated()
             videoListAction.showAnimated()
         }
     }
 
     private interface State {
+        fun onVideoClicked(id: String) = Unit
         fun onBackPressed() = Unit
     }
 

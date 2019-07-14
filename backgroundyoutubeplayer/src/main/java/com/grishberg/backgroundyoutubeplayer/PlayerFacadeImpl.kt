@@ -40,8 +40,12 @@ class PlayerFacadeImpl(
         return videoView
     }
 
-    override fun playStream(id: String) {
+    override fun playVideoById(id: String) {
         state.playVideo(id)
+    }
+
+    override fun stopPlaying() {
+        state.stopPlaying()
     }
 
     override fun onStarted() {
