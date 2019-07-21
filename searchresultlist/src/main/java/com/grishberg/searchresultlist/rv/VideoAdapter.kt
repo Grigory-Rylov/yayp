@@ -36,7 +36,7 @@ internal class VideoAdapter(
 
     // Replace the contents of a view (invoked by the layout manager)
     override fun onBindViewHolder(holder: VideoItemHolder, position: Int) {
-        if (videos.size === 0) {
+        if (videos.isEmpty()) {
             return
         }
 
@@ -109,5 +109,9 @@ internal class VideoAdapter(
     fun addVideo(videos: List<VideoContainer>) {
         this.videos.addAll(videos)
         notifyDataSetChanged()
+    }
+
+    fun clear() {
+        videos.clear()
     }
 }

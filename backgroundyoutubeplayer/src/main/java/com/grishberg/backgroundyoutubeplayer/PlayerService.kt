@@ -32,7 +32,7 @@ class PlayerService : Service(), Player, PlayPauseAction {
     private var state: State = idle
     private var screen: PlayerScreen = PlayerScreen.STUB
 
-    private val mediaController = MediaPlayerControlImpl(mediaPlayer, this)
+    private val mediaControllerState = MediaPlayerControlImpl(mediaPlayer, this)
 
     override fun onBind(intent: Intent): IBinder {
         Log.d(TAG, "onBind")
@@ -61,8 +61,10 @@ class PlayerService : Service(), Player, PlayPauseAction {
 
     override fun stop() {
         mediaPlayer.stop()
+        mediaPlayer.release()
         state.onStopped()
         stopForeground(true)
+        mediaControllerState.onStoped()
     }
 
     override fun onStartPlaying() {
@@ -112,8 +114,13 @@ class PlayerService : Service(), Player, PlayPauseAction {
         if (streams.isEmpty()) {
             return
         }
-        mediaPlayer.setDataSource(this, Uri.parse(streams[0].url))
-        mediaPlayer.prepareAsync()
+        try {
+            mediaPlayer.stop()
+            mediaPlayer.setDataSource(this, Uri.parse(streams[0].url))
+            mediaPlayer.prepareAsync()
+        } catch (e: IllegalStateException) {
+            Log.e(TAG, "setDataSource error", e)
+        }
     }
 
     private fun onError(t: Throwable) {
@@ -150,6 +157,7 @@ class PlayerService : Service(), Player, PlayPauseAction {
         private var mediaController: MediaController? = null
 
         override fun onPrepared() {
+            mediaControllerState.onPrepared()
             state = prepared
             if (surfaceHolder != null) {
                 state.attachView(surfaceHolder!!)
@@ -180,7 +188,7 @@ class PlayerService : Service(), Player, PlayPauseAction {
         }
 
         override fun setMediaController(mc: MediaController) {
-            mc.setMediaPlayer(mediaController)
+            mc.setMediaPlayer(mediaControllerState)
             mc.show()
         }
     }

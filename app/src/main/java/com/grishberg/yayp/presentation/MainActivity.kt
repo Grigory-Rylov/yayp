@@ -12,7 +12,9 @@ import android.view.MotionEvent
 import android.view.SurfaceView
 import android.view.View
 import android.view.ViewGroup
+import android.widget.EditText
 import android.widget.FrameLayout
+import android.widget.LinearLayout
 import com.example.backgroundplayer.PlayerFacade
 import com.grishberg.backgroundyoutubeplayer.PlayerFacadeImpl
 import com.grishberg.backgroundyoutubeplayer.PlayerService
@@ -30,6 +32,8 @@ import com.grishberg.yayp.domain.PlayerLogicImpl
 import com.grishberg.yayp.domain.VideoListAction
 import com.grishberg.yayp.domain.VideoViewAction
 import com.grishberg.youtuberepository.YouTubeRepositoryImpl
+import android.content.Context.INPUT_METHOD_SERVICE
+import android.view.inputmethod.InputMethodManager
 
 
 class MainActivity : AppCompatActivity(), ActivityLifecycleDelegate {
@@ -43,6 +47,9 @@ class MainActivity : AppCompatActivity(), ActivityLifecycleDelegate {
     private lateinit var playerLogic: PlayerLogic
     private val videoListAction = OnVideoListAction()
     private val videoViewAction = OnVideoViewAction()
+    private lateinit var videoListContainer: ViewGroup
+    private lateinit var searchText: EditText
+    private lateinit var searchButton: View
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -65,7 +72,7 @@ class MainActivity : AppCompatActivity(), ActivityLifecycleDelegate {
 
         val container = findViewById<ViewGroup>(R.id.container)
         createVideoView(container)
-        createVideoListView(container)
+        createVideoListView()
     }
 
     override fun onDestroy() {
@@ -78,18 +85,27 @@ class MainActivity : AppCompatActivity(), ActivityLifecycleDelegate {
         playerLogic.onBackPressed()
     }
 
-    private fun createVideoListView(container: ViewGroup) {
+    private fun createVideoListView() {
+        searchButton = findViewById(R.id.searchButton)
+        videoListContainer = findViewById(R.id.playerListContainer)
+        searchText = findViewById(R.id.searchText)
+
         val youTubeRepository = YouTubeRepositoryImpl(BuildConfig.API_KEY)
         videoListFacade = VideoListFacadeImpl(this, youTubeRepository)
         viewList = videoListFacade.createVideoListView()
-        viewList.layoutParams = FrameLayout.LayoutParams(
+        val lp = LinearLayout.LayoutParams(
             FrameLayout.LayoutParams.MATCH_PARENT,
             FrameLayout.LayoutParams.MATCH_PARENT
         )
-        container.addView(viewList)
+        lp.weight = 1f
+        viewList.layoutParams = lp
+        videoListContainer.addView(viewList, 0)
 
         videoListFacade.setCardClickedAction(VideoClickedListener())
         videoListFacade.searchVideos("kotlin")
+        searchButton.setOnClickListener {
+            playerLogic.onSearchClicked(searchText.text)
+        }
     }
 
     private fun createVideoView(container: ViewGroup) {
@@ -103,10 +119,11 @@ class MainActivity : AppCompatActivity(), ActivityLifecycleDelegate {
             logger
         )
 
-        surfaceView.layoutParams = FrameLayout.LayoutParams(
+        val lp = FrameLayout.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT,
             ViewGroup.LayoutParams.WRAP_CONTENT
         )
+        surfaceView.layoutParams = lp
         container.addView(surfaceView)
     }
 
@@ -205,15 +222,26 @@ class MainActivity : AppCompatActivity(), ActivityLifecycleDelegate {
 
     private inner class OnVideoListAction : VideoListAction {
         override fun hideAnimated() {
-            viewList.visibility = View.GONE
+            videoListContainer.visibility = View.GONE
         }
 
         override fun showAnimated() {
-            viewList.visibility = View.VISIBLE
+            videoListContainer.visibility = View.VISIBLE
         }
 
         override fun closeApp() {
             finish()
+        }
+
+        override fun searchVideos(searchText: CharSequence) {
+            videoListFacade.searchVideos(searchText.toString())
+        }
+
+        override fun hideKeyboard() {
+            if (currentFocus != null) {
+                val inputMethodManager = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+                inputMethodManager.hideSoftInputFromWindow(currentFocus.windowToken, 0)
+            }
         }
     }
 }

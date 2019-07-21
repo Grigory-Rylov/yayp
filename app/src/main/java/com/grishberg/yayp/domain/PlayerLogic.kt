@@ -7,6 +7,7 @@ interface PlayerLogic {
     fun unregisterVideoViewAction(action: VideoViewAction) = Unit
     fun registerVideoListAction(action: VideoListAction) = Unit
     fun unregisterVideoListAction(action: VideoListAction) = Unit
+    fun onSearchClicked(text: CharSequence) = Unit
 }
 
 class PlayerLogicImpl : PlayerLogic {
@@ -38,6 +39,11 @@ class PlayerLogicImpl : PlayerLogic {
 
     override fun unregisterVideoListAction(action: VideoListAction) {
         videoListAction = VideoListAction.STUB
+    }
+
+    override fun onSearchClicked(text: CharSequence) {
+        videoListAction.searchVideos(text)
+        videoListAction.hideKeyboard()
     }
 
     private inner class VideoListState : State {
