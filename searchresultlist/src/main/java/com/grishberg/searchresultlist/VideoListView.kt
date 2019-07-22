@@ -11,6 +11,8 @@ internal interface VideoListView {
         videos: List<VideoContainer>
     )
 
+    fun clearList() = Unit
+
     object STUB : VideoListView {
         override var clickedAction: CardClickedAction = CardClickedAction.STUB
 

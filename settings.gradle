@@ -1,1 +1,1 @@
-include ':app', ':youtuberepository', ':searchresultlist', ':videolistcore', ':youtuberepositorycore', ':videolistdemo', ':backgroundyoutubeplayer', ':backgroundplayer', ':common'
+include ':app', ':youtuberepository', ':searchresultlist', ':videolistcore', ':youtuberepositorycore', ':videolistdemo', ':backgroundyoutubeplayer', ':backgroundplayer', ':common', ':buildSrc'

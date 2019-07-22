@@ -34,6 +34,10 @@ class YouTubeSearchResultView @JvmOverloads constructor(
         adapter.addVideo(videos)
     }
 
+    override fun clearList() {
+        adapter.clear()
+    }
+
     private inner class ScrollListener : OnScrollListener() {
         private var lastCheckedPosition: Int = -1
         override fun onScrolled(recyclerView: RecyclerView?, dx: Int, dy: Int) {

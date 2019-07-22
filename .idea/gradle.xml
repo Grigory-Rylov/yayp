@@ -11,6 +11,7 @@
             <option value="$PROJECT_DIR$/app" />
             <option value="$PROJECT_DIR$/backgroundplayer" />
             <option value="$PROJECT_DIR$/backgroundyoutubeplayer" />
+            <option value="$PROJECT_DIR$/buildSrc" />
             <option value="$PROJECT_DIR$/common" />
             <option value="$PROJECT_DIR$/searchresultlist" />
             <option value="$PROJECT_DIR$/videolistcore" />

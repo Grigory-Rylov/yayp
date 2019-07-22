@@ -36,6 +36,7 @@ class VideoListFacadeImpl(
     }
 
     override fun searchVideos(searchString: String) {
+        youTubeVideoListView.clearList()
         youTubeRepository.search(searchString, "")
     }
 

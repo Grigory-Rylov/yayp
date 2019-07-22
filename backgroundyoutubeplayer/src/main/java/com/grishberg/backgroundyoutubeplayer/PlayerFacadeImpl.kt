@@ -40,8 +40,12 @@ class PlayerFacadeImpl(
         return videoView
     }
 
-    override fun playStream(id: String) {
+    override fun playVideoById(id: String) {
         state.playVideo(id)
+    }
+
+    override fun stopPlaying() {
+        state.stopPlaying()
     }
 
     override fun onStarted() {
@@ -99,7 +103,7 @@ class PlayerFacadeImpl(
             logger.d(TAG, "onConnected")
             playerService = service
             playerService.attachView(videoView.holder, this@PlayerFacadeImpl)
-            playerService.setMediaController(MediaControllerFacade(mediaController))
+            playerService.setMediaController(mediaController)
             state = connected
             if (videoId.isNotEmpty()) {
                 state.playVideo(videoId)
