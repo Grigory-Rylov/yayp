@@ -68,7 +68,7 @@ class MediaPlayerControlImpl(
 
         override fun getAudioSessionId(): Int = 0
 
-        override fun canPause(): Boolean = false
+        override fun canPause(): Boolean = true
     }
 
     private inner class Prepared : State {

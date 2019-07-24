@@ -22,17 +22,18 @@ private const val NOTIFICATION_ID = 1234
 private const val TAG = "[DEBUG]"
 
 class PlayerService : Service(), Player, PlayPauseAction {
-    private val mediaPlayer = MediaPlayer()
+    private var mediaPlayer = MediaPlayer()
     private val localBinder: IBinder = LocalBinder()
     private val extractor = YouTubeExtractor.Builder().build()
     private val notification = PlayerNotification(this)
 
-    private val prepared = Prepared()
+    private val playing = Playing()
+    //private val prepared = Prepared()
     private val idle = Idle()
     private var state: State = idle
     private var screen: PlayerScreen = PlayerScreen.STUB
 
-    private val mediaControllerState = MediaPlayerControlImpl(mediaPlayer, this)
+    private var mediaControllerState = MediaPlayerControlImpl(mediaPlayer, this)
 
     override fun onBind(intent: Intent): IBinder {
         Log.d(TAG, "onBind")
@@ -45,52 +46,9 @@ class PlayerService : Service(), Player, PlayPauseAction {
         startForeground(NOTIFICATION_ID, notification)
     }
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        Log.d(TAG, "onStartCommand")
-        return START_STICKY
-    }
-
-    override fun playVideo(id: String) {
-        Log.d(TAG, "playVideo id=$id")
-        prepareMediaPlayer(id)
-    }
-
-    override fun setMediaController(mediaController: MediaController) {
-        state.setMediaController(mediaController)
-    }
-
-    override fun stop() {
-        mediaPlayer.stop()
-        mediaPlayer.release()
-        state.onStopped()
-        stopForeground(true)
-        mediaControllerState.onStoped()
-    }
-
-    override fun onStartPlaying() {
-        val notification = notification.createNotification()
-        startForeground(NOTIFICATION_ID, notification)
-    }
-
-    override fun onPaused() {
-        // TODO: update notification state.
-    }
-
-
-    override fun onDestroy() {
-        Log.d(TAG, "service onDestroyed")
-    }
-
-    private fun prepareMediaPlayer(id: String) {
-        extractor.extract(id)
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe({ extraction ->
-                bindVideoResult(extraction)
-            }, { t ->
-                onError(t)
-            })
-
+    private fun prepareMediaPlayer() {
+        mediaPlayer = MediaPlayer()
+        mediaControllerState = MediaPlayerControlImpl(mediaPlayer, this)
         mediaPlayer.setOnErrorListener(MediaPlayerErrorAction())
 
         mediaPlayer.setOnPreparedListener {
@@ -109,18 +67,47 @@ class PlayerService : Service(), Player, PlayPauseAction {
         }
     }
 
-    private fun bindVideoResult(extraction: YouTubeExtraction) {
-        val streams = extraction.videoStreams
-        if (streams.isEmpty()) {
-            return
-        }
-        try {
-            mediaPlayer.stop()
-            mediaPlayer.setDataSource(this, Uri.parse(streams[0].url))
-            mediaPlayer.prepareAsync()
-        } catch (e: IllegalStateException) {
-            Log.e(TAG, "setDataSource error", e)
-        }
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        Log.d(TAG, "onStartCommand")
+        return START_STICKY
+    }
+
+    override fun playVideo(id: String) {
+        Log.d(TAG, "playVideo id=$id")
+        extractStream(id)
+    }
+
+    private fun extractStream(id: String) {
+        extractor.extract(id)
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe({ extraction ->
+                state.bindVideoResult(extraction)
+            }, { t ->
+                onError(t)
+            })
+    }
+
+    override fun setMediaController(mediaController: MediaController) {
+        state.setMediaController(mediaController)
+    }
+
+    override fun stop() {
+        state.stop()
+    }
+
+    override fun onStartPlaying() {
+        val notification = notification.createNotification()
+        startForeground(NOTIFICATION_ID, notification)
+    }
+
+    override fun onPaused() {
+        // TODO: update notification state.
+    }
+
+    override fun onDestroy() {
+        Log.d(TAG, "service onDestroyed")
+        state.onDestroy()
     }
 
     private fun onError(t: Throwable) {
@@ -135,7 +122,7 @@ class PlayerService : Service(), Player, PlayPauseAction {
 
     override fun detachView() {
         Log.d(TAG, "detachView")
-        mediaPlayer.setDisplay(null)
+        state.detachView()
         screen = PlayerScreen.STUB
     }
 
@@ -157,20 +144,31 @@ class PlayerService : Service(), Player, PlayPauseAction {
         private var mediaController: MediaController? = null
 
         override fun onPrepared() {
+            state = playing
             mediaControllerState.onPrepared()
-            state = prepared
+
             if (surfaceHolder != null) {
                 state.attachView(surfaceHolder!!)
-                surfaceHolder = null
             }
             if (mediaController != null) {
                 state.setMediaController(mediaController!!)
-                mediaController = null
             }
         }
 
-        override fun attachView(sh: SurfaceHolder) {
-            surfaceHolder = sh
+        override fun bindVideoResult(extraction: YouTubeExtraction) {
+            val streams = extraction.videoStreams
+            if (streams.isEmpty()) {
+                return
+            }
+
+            prepareMediaPlayer()
+
+            mediaPlayer.setDataSource(this@PlayerService, Uri.parse(streams[0].url))
+            mediaPlayer.prepareAsync()
+        }
+
+        override fun attachView(s: SurfaceHolder) {
+            surfaceHolder = s
         }
 
         override fun setMediaController(mc: MediaController) {
@@ -178,26 +176,59 @@ class PlayerService : Service(), Player, PlayPauseAction {
         }
     }
 
-    inner class Prepared : State {
-        override fun onStopped() {
+    inner class Playing : State {
+        private var surfaceHolder: SurfaceHolder? = null
+        private var mediaController: MediaController? = null
+        override fun detachView() {
+            mediaPlayer.setDisplay(null)
+        }
+
+        override fun bindVideoResult(extraction: YouTubeExtraction) {
+            stop()
+            state = idle
+            if (surfaceHolder != null) {
+                state.attachView(surfaceHolder!!)
+            }
+            if (mediaController != null) {
+                state.setMediaController(mediaController!!)
+            }
+            state.bindVideoResult(extraction)
+        }
+
+        override fun stop() {
+            mediaPlayer.reset()
+            mediaPlayer.release()
+            stopForeground(true)
+            mediaControllerState.onStoped()
             state = idle
         }
 
-        override fun attachView(surfaceHolder: SurfaceHolder) {
-            mediaPlayer.setDisplay(surfaceHolder)
+        override fun attachView(sh: SurfaceHolder) {
+            mediaPlayer.setDisplay(sh)
+            surfaceHolder = sh
         }
 
         override fun setMediaController(mc: MediaController) {
+            mediaController = mc
             mc.setMediaPlayer(mediaControllerState)
             mc.show()
+        }
+
+        override fun onDestroy() {
+            mediaPlayer.stop()
+            mediaPlayer.release()
+            state = idle
         }
     }
 
     interface State {
         fun onPrepared() = Unit
-        fun onStopped() = Unit
         fun attachView(surfaceHolder: SurfaceHolder) = Unit
         fun setMediaController(mc: MediaController) = Unit
+        fun stop() = Unit
+        fun onDestroy() = Unit
+        fun bindVideoResult(extraction: YouTubeExtraction) = Unit
+        fun detachView() = Unit
     }
 
 }
