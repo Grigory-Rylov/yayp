@@ -102,7 +102,7 @@ class MainActivity : AppCompatActivity(), ActivityLifecycleDelegate {
         videoListContainer.addView(viewList, 0)
 
         videoListFacade.setCardClickedAction(VideoClickedListener())
-        videoListFacade.searchVideos("kotlin")
+        videoListFacade.searchVideos(resources.getString(R.string.initialSearchString))
         searchButton.setOnClickListener {
             playerLogic.onSearchClicked(searchText.text)
         }

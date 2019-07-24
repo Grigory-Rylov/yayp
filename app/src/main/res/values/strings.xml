@@ -3,4 +3,5 @@
     <string name="isPlaying">playing or not</string>
     <string name="stop">stop</string>
     <string name="searchHint">Enter search value</string>
+    <string name="initialSearchString">yandex школа мобильной разработки</string>
 </resources>
