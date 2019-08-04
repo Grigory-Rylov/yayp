@@ -28,7 +28,6 @@ class PlayerService : Service(), Player, PlayPauseAction {
     private val notification = PlayerNotification(this)
 
     private val playing = Playing()
-    //private val prepared = Prepared()
     private val idle = Idle()
     private var state: State = idle
     private var screen: PlayerScreen = PlayerScreen.STUB
@@ -44,6 +43,14 @@ class PlayerService : Service(), Player, PlayPauseAction {
         Log.d(TAG, "onCreated service")
         val notification = notification.createNotification()
         startForeground(NOTIFICATION_ID, notification)
+    }
+
+    override fun seekTo(pos: Int) {
+        state.seekTo(pos)
+    }
+
+    override fun getPosition(): Int {
+        return state.position()
     }
 
     private fun prepareMediaPlayer() {
@@ -105,6 +112,8 @@ class PlayerService : Service(), Player, PlayPauseAction {
         // TODO: update notification state.
     }
 
+
+
     override fun onDestroy() {
         Log.d(TAG, "service onDestroyed")
         state.onDestroy()
@@ -142,6 +151,7 @@ class PlayerService : Service(), Player, PlayPauseAction {
     inner class Idle : State {
         private var surfaceHolder: SurfaceHolder? = null
         private var mediaController: MediaController? = null
+        private var pendingPosition = 0
 
         override fun onPrepared() {
             state = playing
@@ -152,6 +162,11 @@ class PlayerService : Service(), Player, PlayPauseAction {
             }
             if (mediaController != null) {
                 state.setMediaController(mediaController!!)
+            }
+            state.play()
+            if (pendingPosition > 0) {
+                state.seekTo(pendingPosition)
+                pendingPosition = 0
             }
         }
 
@@ -173,6 +188,10 @@ class PlayerService : Service(), Player, PlayPauseAction {
 
         override fun setMediaController(mc: MediaController) {
             mediaController = mc
+        }
+
+        override fun seekTo(pos: Int) {
+            pendingPosition = pos
         }
     }
 
@@ -214,11 +233,21 @@ class PlayerService : Service(), Player, PlayPauseAction {
             mc.show()
         }
 
+        override fun play() {
+            mediaPlayer.start()
+        }
+
         override fun onDestroy() {
             mediaPlayer.stop()
             mediaPlayer.release()
             state = idle
         }
+
+        override fun seekTo(pos: Int) {
+            mediaPlayer.seekTo(pos)
+        }
+
+        override fun position(): Int = mediaPlayer.currentPosition
     }
 
     interface State {
@@ -229,6 +258,9 @@ class PlayerService : Service(), Player, PlayPauseAction {
         fun onDestroy() = Unit
         fun bindVideoResult(extraction: YouTubeExtraction) = Unit
         fun detachView() = Unit
+        fun play() = Unit
+        fun seekTo(pos: Int) = Unit
+        fun position(): Int = 0
     }
 
 }

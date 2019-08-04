@@ -12,6 +12,7 @@ import android.view.MotionEvent
 import android.view.SurfaceView
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.LinearLayout
@@ -30,10 +31,8 @@ import com.grishberg.yayp.common.LogcatLogger
 import com.grishberg.yayp.domain.PlayerLogic
 import com.grishberg.yayp.domain.PlayerLogicImpl
 import com.grishberg.yayp.domain.VideoListAction
-import com.grishberg.yayp.domain.VideoViewAction
+import com.grishberg.yayp.domain.VideoView
 import com.grishberg.youtuberepository.YouTubeRepositoryImpl
-import android.content.Context.INPUT_METHOD_SERVICE
-import android.view.inputmethod.InputMethodManager
 
 
 class MainActivity : AppCompatActivity(), ActivityLifecycleDelegate {
@@ -73,6 +72,17 @@ class MainActivity : AppCompatActivity(), ActivityLifecycleDelegate {
         val container = findViewById<ViewGroup>(R.id.container)
         createVideoView(container)
         createVideoListView()
+
+        if (savedInstanceState != null) {
+            playerLogic.onViewCreated(ResoredFromBundleState(savedInstanceState))
+        } else {
+            playerLogic.onSearchClicked(resources.getString(R.string.initialSearchString))
+        }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        playerLogic.onSaveState(BundleStateStorage(outState))
     }
 
     override fun onDestroy() {
@@ -102,7 +112,6 @@ class MainActivity : AppCompatActivity(), ActivityLifecycleDelegate {
         videoListContainer.addView(viewList, 0)
 
         videoListFacade.setCardClickedAction(VideoClickedListener())
-        videoListFacade.searchVideos(resources.getString(R.string.initialSearchString))
         searchButton.setOnClickListener {
             playerLogic.onSearchClicked(searchText.text)
         }
@@ -200,7 +209,7 @@ class MainActivity : AppCompatActivity(), ActivityLifecycleDelegate {
         }
     }
 
-    private inner class OnVideoViewAction : VideoViewAction {
+    private inner class OnVideoViewAction : VideoView {
         override fun showAnimated() {
             surfaceView.visibility = View.VISIBLE
 
@@ -218,6 +227,12 @@ class MainActivity : AppCompatActivity(), ActivityLifecycleDelegate {
         override fun stopPlay() {
             playerFacade.stopPlaying()
         }
+
+        override fun seekTo(position: Int) {
+            playerFacade.setPosition(position)
+        }
+
+        override fun position(): Int = playerFacade.getPosition()
     }
 
     private inner class OnVideoListAction : VideoListAction {

@@ -76,6 +76,13 @@ class PlayerFacadeImpl(
         videoView.requestLayout()
     }
 
+    override fun setPosition(pos: Int) {
+        state.setPosition(pos)
+    }
+
+    override fun getPosition(): Int = state.getPosition()
+
+
     private inner class Connected : State {
         override fun onDisconnected() {
             state = disconnected
@@ -94,10 +101,18 @@ class PlayerFacadeImpl(
         override fun playVideo(id: String) {
             playerService.playVideo(id)
         }
+
+        override fun setPosition(pos: Int) {
+            playerService.seekTo(pos)
+        }
+
+        override fun getPosition(): Int = playerService.getPosition()
+
     }
 
     private inner class Disconnected : State {
         private var videoId = ""
+        private var pendingPosition = 0
 
         override fun onConnected(service: Player) {
             logger.d(TAG, "onConnected")
@@ -109,6 +124,9 @@ class PlayerFacadeImpl(
                 state.playVideo(videoId)
                 videoId = ""
             }
+            if (pendingPosition > 0) {
+                state.setPosition(pendingPosition)
+            }
         }
 
         override fun onStart() {
@@ -118,6 +136,12 @@ class PlayerFacadeImpl(
         override fun playVideo(id: String) {
             videoId = id
         }
+
+        override fun setPosition(pos: Int) {
+            pendingPosition = pos
+        }
+
+        override fun getPosition(): Int = 0
     }
 
     private interface State {
@@ -127,6 +151,8 @@ class PlayerFacadeImpl(
         fun onStart() = Unit
         fun stopPlaying() = Unit
         fun playVideo(id: String) = Unit
+        fun setPosition(pos: Int) = Unit
+        fun getPosition(): Int
     }
 
 }

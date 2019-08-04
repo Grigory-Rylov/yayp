@@ -10,4 +10,8 @@ interface PlayerFacade {
     fun playVideoById(id: String)
 
     fun stopPlaying()
+
+    fun setPosition(pos: Int)
+
+    fun getPosition() : Int
 }

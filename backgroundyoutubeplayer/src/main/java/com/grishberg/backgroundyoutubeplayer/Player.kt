@@ -9,6 +9,8 @@ interface Player {
     fun stop()
     fun playVideo(id: String)
     fun setMediaController(mediaController: MediaController)
+    fun seekTo(pos: Int)
+    fun getPosition(): Int
 
     object STUB : Player {
         override fun attachView(surfaceHolder: SurfaceHolder, screen: PlayerScreen) = Unit
@@ -16,5 +18,7 @@ interface Player {
         override fun stop() = Unit
         override fun playVideo(id: String) = Unit
         override fun setMediaController(mediaController: MediaController) = Unit
+        override fun seekTo(pos: Int) = Unit
+        override fun getPosition(): Int = -1
     }
 }
