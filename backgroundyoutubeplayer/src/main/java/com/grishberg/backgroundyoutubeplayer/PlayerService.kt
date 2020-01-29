@@ -2,14 +2,20 @@ package com.grishberg.backgroundyoutubeplayer
 
 
 import android.app.Service
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
+import android.media.AudioManager
 import android.media.MediaPlayer
 import android.net.Uri
 import android.os.Binder
 import android.os.IBinder
+import android.support.v4.media.session.MediaSessionCompat
 import android.util.Log
 import android.view.SurfaceHolder
 import android.widget.MediaController
+import androidx.core.app.NotificationManagerCompat
 import com.commit451.youtubeextractor.YouTubeExtraction
 import com.commit451.youtubeextractor.YouTubeExtractor
 import com.grishberg.backgroundyoutubeplayer.mediacontroller.MediaPlayerControlImpl
@@ -18,6 +24,7 @@ import com.grishberg.backgroundyoutubeplayer.notification.PlayerNotification
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
 
+
 private const val NOTIFICATION_ID = 1234
 private const val TAG = "[DEBUG]"
 
@@ -25,7 +32,8 @@ class PlayerService : Service(), Player, PlayPauseAction {
     private var mediaPlayer = MediaPlayer()
     private val localBinder: IBinder = LocalBinder()
     private val extractor = YouTubeExtractor.Builder().build()
-    private val notification = PlayerNotification(this)
+    private lateinit var mediaSessionCompat: MediaSessionCompat
+    private lateinit var notificationBuilder: PlayerNotification
 
     private val playing = Playing()
     private val idle = Idle()
@@ -34,6 +42,15 @@ class PlayerService : Service(), Player, PlayPauseAction {
 
     private var mediaControllerState = MediaPlayerControlImpl(mediaPlayer, this)
 
+
+    private val noisyReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            if (mediaPlayer.isPlaying) {
+                state.pause()
+            }
+        }
+    }
+
     override fun onBind(intent: Intent): IBinder {
         Log.d(TAG, "onBind")
         return localBinder
@@ -41,8 +58,21 @@ class PlayerService : Service(), Player, PlayPauseAction {
 
     override fun onCreate() {
         Log.d(TAG, "onCreated service")
-        val notification = notification.createNotification()
-        startForeground(NOTIFICATION_ID, notification)
+        initMediaSession()
+        initNoisyReceiver()
+        notificationBuilder = PlayerNotification(this, this, mediaSessionCompat)
+        //val notification = notificationBuilder.createNotification()
+        //startForeground(NOTIFICATION_ID, notification)
+    }
+
+    private fun initNoisyReceiver() {
+        //Handles headphones coming unplugged. cannot be done through a manifest receiver
+        val filter = IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY)
+        registerReceiver(noisyReceiver, filter)
+    }
+
+    private fun initMediaSession() {
+        mediaSessionCompat = MediaSessionCompat(this, TAG)
     }
 
     override fun seekTo(pos: Int) {
@@ -104,7 +134,7 @@ class PlayerService : Service(), Player, PlayPauseAction {
     }
 
     override fun onStartPlaying() {
-        val notification = notification.createNotification()
+        val notification = notificationBuilder.createNotification()
         startForeground(NOTIFICATION_ID, notification)
     }
 
@@ -113,10 +143,12 @@ class PlayerService : Service(), Player, PlayPauseAction {
     }
 
 
-
     override fun onDestroy() {
         Log.d(TAG, "service onDestroyed")
         state.onDestroy()
+        unregisterReceiver(noisyReceiver)
+        mediaSessionCompat.release()
+        NotificationManagerCompat.from(this).cancel(NOTIFICATION_ID)
     }
 
     private fun onError(t: Throwable) {
@@ -234,7 +266,11 @@ class PlayerService : Service(), Player, PlayPauseAction {
         }
 
         override fun play() {
-            mediaPlayer.start()
+            if (mediaPlayer.isPlaying) {
+                mediaPlayer.pause()
+            } else {
+                mediaPlayer.start()
+            }
         }
 
         override fun onDestroy() {
@@ -248,6 +284,10 @@ class PlayerService : Service(), Player, PlayPauseAction {
         }
 
         override fun position(): Int = mediaPlayer.currentPosition
+
+        override fun pause() {
+            mediaPlayer.pause()
+        }
     }
 
     interface State {
@@ -261,6 +301,7 @@ class PlayerService : Service(), Player, PlayPauseAction {
         fun play() = Unit
         fun seekTo(pos: Int) = Unit
         fun position(): Int = 0
+        fun pause() = Unit
     }
 
 }

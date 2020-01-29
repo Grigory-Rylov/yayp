@@ -7,7 +7,6 @@ import android.content.ServiceConnection
 import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
-import android.support.v7.app.AppCompatActivity
 import android.view.MotionEvent
 import android.view.SurfaceView
 import android.view.View
@@ -16,6 +15,7 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.LinearLayout
+import androidx.appcompat.app.AppCompatActivity
 import com.example.backgroundplayer.PlayerFacade
 import com.grishberg.backgroundyoutubeplayer.PlayerFacadeImpl
 import com.grishberg.backgroundyoutubeplayer.PlayerService

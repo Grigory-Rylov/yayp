@@ -1,9 +1,9 @@
 package com.grishberg.searchresultlist
 
 import android.content.Context
-import android.support.v7.widget.LinearLayoutManager
-import android.support.v7.widget.RecyclerView
 import android.util.AttributeSet
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.grishberg.searchresultlist.rv.OnScrolledToEndAction
 import com.grishberg.searchresultlist.rv.VideoAdapter
 import com.grishberg.videolistcore.CardClickedAction
@@ -40,7 +40,8 @@ class YouTubeSearchResultView @JvmOverloads constructor(
 
     private inner class ScrollListener : OnScrollListener() {
         private var lastCheckedPosition: Int = -1
-        override fun onScrolled(recyclerView: RecyclerView?, dx: Int, dy: Int) {
+
+        override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
             val visibleItemCount = layoutManager.childCount
             val totalItemCount = layoutManager.itemCount
             val firstVisibleItemPosition = layoutManager.findFirstVisibleItemPosition()
