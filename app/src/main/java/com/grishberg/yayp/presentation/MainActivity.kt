@@ -64,7 +64,7 @@ class MainActivity : AppCompatActivity(), ActivityLifecycleDelegate {
 
         val startServiceIntent = Intent(this@MainActivity, PlayerService::class.java)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForegroundService(startServiceIntent)
+            startService(startServiceIntent)
         } else {
             startService(startServiceIntent)
         }

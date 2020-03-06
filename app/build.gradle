@@ -21,7 +21,7 @@ android {
         minSdkVersion build_versions.min_sdk
         targetSdkVersion build_versions.target_sdk
         versionCode 4
-        versionName "20.01.29.0"
+        versionName "20.03.06.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         buildConfigField "String", "API_KEY", "\"" + getApiKey() + "\""
         buildConfigField "String", "METRICA_API_KEY", "\"" + getMetricaApiKey() + "\""
@@ -31,12 +31,12 @@ android {
         debug {
             applicationIdSuffix '.debug'
             versionNameSuffix '-DEBUG'
-            resValue "string", "app_name", "Yayp.debug"
+            resValue "string", "application_name", "Yayp.debug"
         }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-            resValue "string", "app_name", "Yayp"
+            resValue "string", "application_name", "Yayp"
         }
     }
 }
