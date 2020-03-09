@@ -16,6 +16,7 @@ import android.util.Log
 import android.view.SurfaceHolder
 import android.widget.MediaController
 import androidx.core.app.NotificationManagerCompat
+import com.commit451.youtubeextractor.Stream
 import com.commit451.youtubeextractor.YouTubeExtraction
 import com.commit451.youtubeextractor.YouTubeExtractor
 import com.grishberg.backgroundyoutubeplayer.mediacontroller.MediaPlayerControlImpl
@@ -203,14 +204,28 @@ class PlayerService : Service(), Player, PlayPauseAction {
         }
 
         override fun bindVideoResult(extraction: YouTubeExtraction) {
-            val streams = extraction.videoStreams
+            val streams = extraction.streams
             if (streams.isEmpty()) {
+                Log.d(TAG, "empty video streams")
                 return
             }
 
             prepareMediaPlayer()
+            val stream = streams.first()
+            when (stream) {
+                is Stream.VideoStream -> processVideo(stream)
+                is Stream.AudioStream -> processAudio(stream)
 
-            mediaPlayer.setDataSource(this@PlayerService, Uri.parse(streams[0].url))
+            }
+        }
+
+        private fun processVideo(stream: Stream.VideoStream) {
+            mediaPlayer.setDataSource(this@PlayerService, Uri.parse(stream.url))
+            mediaPlayer.prepareAsync()
+        }
+
+        private fun processAudio(stream: Stream.AudioStream) {
+            mediaPlayer.setDataSource(this@PlayerService, Uri.parse(stream.url))
             mediaPlayer.prepareAsync()
         }
 

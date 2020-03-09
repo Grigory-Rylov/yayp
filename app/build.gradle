@@ -39,6 +39,10 @@ android {
             resValue "string", "application_name", "Yayp"
         }
     }
+    compileOptions {
+        sourceCompatibility 1.8
+        targetCompatibility 1.8
+    }
 }
 
 def getApiKey() {
