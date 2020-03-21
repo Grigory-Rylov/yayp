@@ -14,13 +14,7 @@
             android:layout_height="match_parent"
             android:orientation="vertical">
 
-        <!-- video list-->
-        <com.grishberg.searchresultlist.YouTubeSearchResultView
-                android:id="@+id/videoList"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                />
-        <!-- search text box -->
+        <!-- search bar -->
         <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -37,6 +31,13 @@
                     android:src="@android:drawable/ic_menu_search"/>
 
         </LinearLayout>
+
+        <!-- video list-->
+        <com.grishberg.searchresultlist.YouTubeSearchResultView
+                android:id="@+id/videoList"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+            />
     </LinearLayout>
 
 </FrameLayout>

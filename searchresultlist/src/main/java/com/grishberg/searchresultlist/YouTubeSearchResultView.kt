@@ -13,7 +13,6 @@ class YouTubeSearchResultView @JvmOverloads constructor(
     ctx: Context,
     attrs: AttributeSet? = null,
     style: Int = 0
-
 ) : RecyclerView(ctx, attrs, style), VideoListView {
 
     private val adapter = VideoAdapter(ctx, VideoClickedAction())
@@ -22,12 +21,16 @@ class YouTubeSearchResultView @JvmOverloads constructor(
 
     var loadMoreAction: OnScrolledToEndAction = OnScrolledToEndAction.STUB
 
-    private val layoutManager = LinearLayoutManager(ctx, VERTICAL, false)
+    private lateinit var layoutManager: LinearLayoutManager
 
     init {
         addOnScrollListener(ScrollListener())
-        setLayoutManager(layoutManager)
         setAdapter(adapter)
+    }
+
+    fun initLayout(isTablet: Boolean) {
+        layoutManager = LinearLayoutManager(context, if (isTablet) HORIZONTAL else VERTICAL, false)
+        setLayoutManager(layoutManager)
     }
 
     override fun onSearchResultReceived(nextPageId: String, videos: List<VideoContainer>) {
@@ -37,6 +40,7 @@ class YouTubeSearchResultView @JvmOverloads constructor(
     override fun clearList() {
         adapter.clear()
     }
+
 
     private inner class ScrollListener : OnScrollListener() {
         private var lastCheckedPosition: Int = -1

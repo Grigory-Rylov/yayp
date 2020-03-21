@@ -20,7 +20,7 @@ android {
         applicationId "com.grishberg.yayp"
         minSdkVersion build_versions.min_sdk
         targetSdkVersion build_versions.target_sdk
-        versionCode 10
+        versionCode 11
         versionName "20.03.21.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         buildConfigField "String", "API_KEY", "\"" + getApiKey() + "\""

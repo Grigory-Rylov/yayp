@@ -39,7 +39,6 @@ class MainActivity : AppCompatActivity(), ActivityLifecycleDelegate {
     private val logger = LogcatLogger()
     private val connection = ServiceConnectionImpl()
     private lateinit var surfaceView: SurfaceView
-    private lateinit var viewList: View
     private lateinit var videoListFacade: VideoListFacade
     private val lifecycleActions: ArrayList<ActivityLifecycleAction> = ArrayList()
     private lateinit var playerFacade: PlayerFacade
@@ -101,15 +100,8 @@ class MainActivity : AppCompatActivity(), ActivityLifecycleDelegate {
         searchText = findViewById(R.id.searchText)
 
         val youTubeRepository = YouTubeRepositoryImpl(BuildConfig.API_KEY)
-        videoListFacade = VideoListFacadeImpl(this, youTubeRepository)
-        viewList = videoListFacade.createVideoListView()
-        val lp = LinearLayout.LayoutParams(
-            FrameLayout.LayoutParams.MATCH_PARENT,
-            FrameLayout.LayoutParams.MATCH_PARENT
-        )
-        lp.weight = 1f
-        viewList.layoutParams = lp
-        videoListContainer.addView(viewList, 0)
+        val isTablet = resources.getBoolean(R.bool.isTablet)
+        videoListFacade = VideoListFacadeImpl(this, youTubeRepository, R.id.videoList, isTablet)
 
         videoListFacade.setCardClickedAction(VideoClickedListener())
         searchButton.setOnClickListener {
@@ -254,7 +246,8 @@ class MainActivity : AppCompatActivity(), ActivityLifecycleDelegate {
 
         override fun hideKeyboard() {
             if (currentFocus != null) {
-                val inputMethodManager = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+                val inputMethodManager =
+                    getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
                 inputMethodManager.hideSoftInputFromWindow(currentFocus.windowToken, 0)
             }
         }

@@ -1,8 +1,6 @@
 package com.grishberg.videolistdemo
 
 import android.os.Bundle
-import android.view.ViewGroup
-import android.widget.FrameLayout
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.grishberg.searchresultlist.VideoListFacadeImpl
@@ -22,23 +20,17 @@ class DemoMainActivity : AppCompatActivity() {
     }
 
     private fun createView() {
-        val container: ViewGroup = findViewById(R.id.container)
         youTubeRepository = YouTubeRepositoryImpl(BuildConfig.API_KEY)
-        videoListFacade = VideoListFacadeImpl(this, youTubeRepository)
-        val viewList = videoListFacade.createVideoListView()
-        viewList.layoutParams = FrameLayout.LayoutParams(
-            FrameLayout.LayoutParams.MATCH_PARENT,
-            FrameLayout.LayoutParams.MATCH_PARENT
-        )
-        container.addView(viewList)
-
+        val isTablet = resources.getBoolean(R.bool.isTablet)
+        videoListFacade = VideoListFacadeImpl(this, youTubeRepository, R.id.videoList, isTablet)
         videoListFacade.setCardClickedAction(VideoClickedListener())
         videoListFacade.searchVideos("kotlin")
     }
 
     private inner class VideoClickedListener : CardClickedAction {
         override fun onCardClicked(cardId: String, title: String, desc: String) {
-            Toast.makeText(this@DemoMainActivity, "clicked on id=${cardId}", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this@DemoMainActivity, "clicked on id=${cardId}", Toast.LENGTH_SHORT)
+                .show()
         }
     }
 }

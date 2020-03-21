@@ -1,7 +1,6 @@
 package com.grishberg.searchresultlist
 
-import android.content.Context
-import android.view.View
+import android.app.Activity
 import com.grishberg.searchresultlist.rv.OnScrolledToEndAction
 import com.grishberg.videolistcore.CardClickedAction
 import com.grishberg.videolistcore.VideoListFacade
@@ -12,23 +11,21 @@ import com.grishberg.youtuberepositorycore.YouTubeRepository
  * Implementation of video view facade.
  */
 class VideoListFacadeImpl(
-    private val contex: Context,
-    private val youTubeRepository: YouTubeRepository
+    activity: Activity,
+    private val youTubeRepository: YouTubeRepository,
+    viewId: Int,
+    isTablet: Boolean
 ) : VideoListFacade {
     private var lastSearchString: String = ""
     private var nextId: String = ""
+    private val youTubeSearchResultView = activity.findViewById<YouTubeSearchResultView>(viewId)
 
     private var youTubeVideoListView: VideoListView = VideoListView.STUB
 
     init {
         youTubeRepository.setPageDownloadedAction(OnNextPageLoadAction())
-    }
-
-    override fun createVideoListView(): View {
-        val youTubeSearchResultView = YouTubeSearchResultView(contex)
+        youTubeSearchResultView.initLayout(isTablet)
         youTubeSearchResultView.loadMoreAction = ScrolledToEndAction()
-        youTubeVideoListView = youTubeSearchResultView
-        return youTubeSearchResultView
     }
 
     override fun setCardClickedAction(action: CardClickedAction) {
