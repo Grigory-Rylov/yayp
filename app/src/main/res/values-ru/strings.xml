@@ -1,5 +1,5 @@
 <resources>
     <string name="app_name">yayp</string>
-    <string name="searchHint">Enter search value</string>
+    <string name="searchHint">Введите поисковый запрос</string>
     <string name="initialSearchString">yandex школа мобильной разработки</string>
 </resources>

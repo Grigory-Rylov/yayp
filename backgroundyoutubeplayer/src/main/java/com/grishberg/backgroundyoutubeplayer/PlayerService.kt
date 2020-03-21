@@ -22,6 +22,8 @@ import com.commit451.youtubeextractor.YouTubeExtractor
 import com.grishberg.backgroundyoutubeplayer.mediacontroller.MediaPlayerControlImpl
 import com.grishberg.backgroundyoutubeplayer.mediacontroller.PlayPauseAction
 import com.grishberg.backgroundyoutubeplayer.notification.PlayerNotification
+import com.grishberg.backgroundyoutubeplayer.strategy.BestQualityStrategy
+import com.grishberg.backgroundyoutubeplayer.strategy.SelectStreamStrategy
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
 
@@ -40,6 +42,7 @@ class PlayerService : Service(), Player, PlayPauseAction {
     private val idle = Idle()
     private var state: State = idle
     private var screen: PlayerScreen = PlayerScreen.STUB
+    private var selectStreamStrategy: SelectStreamStrategy = BestQualityStrategy()
 
     private var mediaControllerState = MediaPlayerControlImpl(mediaPlayer, this)
 
@@ -211,11 +214,11 @@ class PlayerService : Service(), Player, PlayPauseAction {
             }
 
             prepareMediaPlayer()
-            val stream = streams.first()
-            when (stream) {
-                is Stream.VideoStream -> processVideo(stream)
-                is Stream.AudioStream -> processAudio(stream)
-
+            selectStreamStrategy.selectStream(streams) {
+                when (it) {
+                    is Stream.VideoStream -> processVideo(it)
+                    is Stream.AudioStream -> processAudio(it)
+                }
             }
         }
 
